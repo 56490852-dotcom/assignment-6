@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Increasing Annuities — BMI 111 Assignment 6</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+/* ═══ DESIGN TOKENS ═══════════════════════════════════════════════ */
+:root{
+  --bg:#0b0b10;--surf:#121219;--surf2:#191921;--surf3:#20202b;
+  --bdr:#28283a;--bdr2:#35354a;
+  --purple:#7855c0;--purple-l:#9b7fda;--purple-g:rgba(120,85,192,.16);
+  --teal:#22a890;--teal-l:#38c9ae;--teal-g:rgba(34,168,144,.14);
+  --gold:#dfa83c;--gold-g:rgba(223,168,60,.16);
+  --red:#d95858;--txt:#ddddf0;--txt2:#8080a0;--txt3:#48486a;
+  --r:8px;--rl:13px;--sw:234px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:13px}
+
+/* ═══ LAYOUT ══════════════════════════════════════════════════════ */
+.layout{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sw);min-width:var(--sw);background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+/* ═══ SIDEBAR ════════════════════════════════════════════════════ */
+.sb-head{padding:16px 15px 13px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px}
+.sb-badge{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--purple),var(--teal));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sb-name{font-size:12px;font-weight:600;line-height:1.35;color:var(--txt)}
+.sb-unit{font-size:9.5px;color:var(--txt3);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 7px}
+.sb-sec{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);padding:13px 8px 4px}
+.nb{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:7px;border:none;background:none;color:var(--txt2);font-size:12px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:all .12s;text-align:left}
+.nb:hover{background:var(--surf3);color:var(--txt)}
+.nb.on{background:linear-gradient(135deg,var(--purple-g),var(--teal-g));color:var(--txt);border:1px solid rgba(120,85,192,.28)}
+.nb-ic{width:18px;text-align:center;font-size:14px}
+.sb-foot{padding:12px 14px;border-top:1px solid var(--bdr);font-size:9.5px;color:var(--txt3);line-height:1.7}
+
+/* ═══ TOPBAR ══════════════════════════════════════════════════════ */
+.topbar{height:52px;min-height:52px;padding:0 22px;border-bottom:1px solid var(--bdr);background:var(--surf);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:16px}
+.tb-l{min-width:0}
+.tb-title{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-sub{font-size:10.5px;color:var(--txt3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-pill{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal-l);background:var(--surf3);border:1px solid var(--bdr2);border-radius:20px;padding:3px 12px;white-space:nowrap;flex-shrink:0;max-width:55vw;overflow:hidden;text-overflow:ellipsis}
+
+/* ═══ CONTENT ════════════════════════════════════════════════════ */
+.content{flex:1;overflow-y:auto;padding:20px 22px 32px}
+.panel{display:none}.panel.on{display:block}
+
+/* ═══ CARDS ══════════════════════════════════════════════════════ */
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rl);padding:17px 19px;margin-bottom:13px}
+.ch{display:flex;align-items:center;gap:7px;margin-bottom:13px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--txt2)}
+.ch::before{content:'';width:3px;height:10px;border-radius:2px;flex-shrink:0;background:linear-gradient(to bottom,var(--purple),var(--teal))}
+
+/* ═══ FORM ═══════════════════════════════════════════════════════ */
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10.5px;font-weight:500;color:var(--txt2);display:flex;align-items:center;gap:5px}
+.bi{font-size:8.5px;padding:1px 5px;border-radius:3px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(120,85,192,.2);color:var(--purple-l)}
+.bo{font-size:8.5px;padding:1px 5px;border-radius:3px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(34,168,144,.2);color:var(--teal-l)}
+input[type=number],select{height:37px;background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);color:var(--txt);padding:0 10px;font-family:'Inter',sans-serif;font-size:13px;width:100%;transition:border-color .14s,box-shadow .14s;outline:none;-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=number]:focus,select:focus{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-g)}
+input.out{background:var(--surf3);color:var(--teal-l);font-weight:600;font-family:'JetBrains Mono',monospace;border-color:rgba(34,168,144,.28);cursor:default}
+input.out:focus{border-color:rgba(34,168,144,.28);box-shadow:none}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
+select option{background:var(--surf2)}
+
+/* ═══ GRID HELPERS ═══════════════════════════════════════════════ */
+.ga{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row-wrap{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+
+/* ═══ SOLVE PILLS ════════════════════════════════════════════════ */
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{height:29px;padding:0 13px;border-radius:14px;border:1px solid var(--bdr);background:none;color:var(--txt2);font-size:11.5px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:all .12s}
+.pill:hover{border-color:var(--purple-l);color:var(--txt)}
+.pill.on{background:var(--purple);border-color:var(--purple);color:#fff}
+
+/* ═══ RESULT TILES ════════════════════════════════════════════════ */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:8px;margin-bottom:13px}
+.tile{background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:10px 12px}
+.tile.hi{background:linear-gradient(135deg,rgba(120,85,192,.11),rgba(34,168,144,.07));border-color:rgba(120,85,192,.3)}
+.tl{font-size:9.5px;color:var(--txt3);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.tv{font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv.teal{color:var(--teal-l)}.tv.purple{color:var(--purple-l)}.tv.gold{color:var(--gold)}
+
+/* ═══ CHART ═══════════════════════════════════════════════════════ */
+.chbox{position:relative;height:230px}
+
+/* ═══ ERROR / INFO ════════════════════════════════════════════════ */
+.err{color:var(--red);font-size:11px;padding:6px 10px;background:rgba(217,88,88,.08);border:1px solid rgba(217,88,88,.2);border-radius:6px;margin-top:8px;display:none}
+/* custom period input row */
+.custom-per{display:none;align-items:center;gap:7px;margin-top:5px;padding:7px 10px;background:rgba(120,85,192,.07);border:1px solid rgba(120,85,192,.22);border-radius:var(--r)}
+.custom-per.show{display:flex}
+.custom-per label{font-size:10.5px;color:var(--purple-l);white-space:nowrap;font-weight:500}
+.custom-per input{height:32px;width:90px;flex-shrink:0;background:var(--surf2);border:1px solid rgba(120,85,192,.3);border-radius:var(--r);color:var(--txt);padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;outline:none}
+.custom-per input:focus{border-color:var(--purple);box-shadow:0 0 0 2px var(--purple-g)}
+.custom-per .hint{font-size:10px;color:var(--txt3);font-style:italic}
+.ibox{background:var(--surf2);border:1px solid var(--bdr2);border-radius:var(--r);padding:10px 14px;margin-bottom:13px;font-size:11px;color:var(--txt2);line-height:1.65}
+.ibox strong{color:var(--teal-l)}
+.ibox code{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--purple-l);background:rgba(120,85,192,.1);padding:1px 5px;border-radius:3px}
+
+/* ═══ HOME ════════════════════════════════════════════════════════ */
+.hero{background:linear-gradient(135deg,rgba(120,85,192,.12),rgba(34,168,144,.07));border:1px solid rgba(120,85,192,.22);border-radius:var(--rl);padding:24px 22px 20px;margin-bottom:14px}
+.hero h1{font-size:22px;font-weight:700;margin-bottom:6px;background:linear-gradient(120deg,var(--purple-l) 30%,var(--teal-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:11.5px;color:var(--txt2);line-height:1.7;max-width:620px}
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-bottom:13px}
+.hcard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rl);padding:15px 17px;cursor:pointer;transition:all .17s}
+.hcard:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 7px 26px rgba(120,85,192,.13)}
+.hc-icon{font-size:21px;margin-bottom:9px}
+.hc-title{font-size:12.5px;font-weight:600;margin-bottom:4px}
+.hc-desc{font-size:11px;color:var(--txt2);line-height:1.5}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:6px}
+.frow{display:flex;align-items:baseline;gap:10px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:8px 12px}
+.flbl{font-size:10.5px;color:var(--txt2);min-width:140px;flex-shrink:0;font-weight:500}
+.feq{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--teal-l);font-weight:500;word-break:break-all}
+
+/* ═══ DATE CONVERTER ════════════════════════════════════════════ */
+.dc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:9px}
+.dc-u{background:var(--surf2);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 14px}
+.dc-ul{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--txt3);margin-bottom:6px}
+.dc-u input{height:38px;font-size:16px;font-weight:600;font-family:'JetBrains Mono',monospace;background:transparent;border:none;border-bottom:2px solid var(--bdr2);border-radius:0;padding:0 2px;color:var(--txt);width:100%;outline:none;-moz-appearance:textfield;appearance:textfield}
+.dc-u input::-webkit-inner-spin-button{-webkit-appearance:none}
+.dc-u input:focus{border-bottom-color:var(--teal)}
+.dc-note{font-size:10px;color:var(--txt3);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.dc-sum{background:linear-gradient(135deg,rgba(34,168,144,.09),rgba(120,85,192,.06));border:1px solid rgba(34,168,144,.22);border-radius:var(--rl);padding:13px 17px;margin-top:12px}
+.dc-sum h4{font-size:9.5px;color:var(--teal-l);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.dc-phrase{font-size:17px;font-weight:600;color:var(--txt)}
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:6px}
+.qc{background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:7px 11px;cursor:pointer;transition:all .13s}
+.qc:hover{border-color:var(--teal);background:rgba(34,168,144,.07)}
+.qc-n{font-size:9.5px;color:var(--txt3)}.qc-v{font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--txt)}
+.srow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.sb2{height:29px;padding:0 12px;border-radius:14px;border:1px solid var(--bdr2);background:none;color:var(--txt2);font-size:11.5px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .13s}
+.sb2:hover{border-color:var(--teal-l);color:var(--teal-l)}
+.sb2.del{border-color:rgba(217,88,88,.3);color:var(--red)}.sb2.del:hover{border-color:var(--red)}
+
+/* ═══ SCROLLBAR ══════════════════════════════════════════════════ */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ════════════════ SIDEBAR ════════════════ -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <div class="sb-badge">📈</div>
+    <div>
+      <div class="sb-name">Increasing Annuities</div>
+      <div class="sb-unit">BMI 111 · Assignment 6</div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Overview</div>
+    <button class="nb on" onclick="go('home',this)"><span class="nb-ic">⊞</span>Dashboard</button>
+    <div class="sb-sec">Calculators</div>
+    <button class="nb" onclick="go('kth',this)"><span class="nb-ic">🔢</span>Every k-th Period</button>
+    <button class="nb" onclick="go('next',this)"><span class="nb-ic">↗</span>Every Next Payment</button>
+    <button class="nb" onclick="go('single',this)"><span class="nb-ic">💰</span>Single Investment</button>
+    <button class="nb" onclick="go('infl',this)"><span class="nb-ic">📊</span>Inflation Adjustment</button>
+    <div class="sb-sec">Tools</div>
+    <button class="nb" onclick="go('date',this)"><span class="nb-ic">📅</span>Date Converter</button>
+  </nav>
+  <div class="sb-foot">NWU Centre for BMI<br>Study Unit 6 · 2025<br><span style="color:var(--teal-l)">★</span> All formulas verified</div>
+</aside>
+
+<!-- ════════════════ MAIN ════════════════ -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-l">
+      <div class="tb-title" id="tbt">Dashboard</div>
+      <div class="tb-sub" id="tbs">Increasing annuities — Study Unit 6 · BMI 111</div>
+    </div>
+    <div class="tb-pill" id="tbp">FV = X·[(1+r)^k−1]/r · [(1+r)^km−(1+j)^m]/[(1+r)^k−(1+j)]</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════ HOME ══════ -->
+    <div class="panel on" id="panel-home">
+      <div class="hero">
+        <h1>Increasing Annuities Calculator</h1>
+        <p>BMI 111 · Assignment 6 · NWU Centre for Business Mathematics and Informatics.<br>
+           All answers verified against the assignment checklist. Supports every rate type — effective annual, effective periodic, nominal i^(p), force of interest δ, and simple interest (any compounding period). Fully static — runs offline with no server required.</p>
+      </div>
+      <div class="hgrid">
+        <div class="hcard" onclick="go('kth')">
+          <div class="hc-icon">🔢</div>
+          <div class="hc-title">Every k-th Period</div>
+          <div class="hc-desc">Payments constant for k periods then increase by j%. m groups. Solve FV, PV, or X. Arrears or advance.</div>
+        </div>
+        <div class="hcard" onclick="go('next')">
+          <div class="hc-icon">↗</div>
+          <div class="hc-title">Every Next Payment</div>
+          <div class="hc-desc">Each individual payment j% larger than the previous (k=1 special case). Solve FV, PV, or X.</div>
+        </div>
+        <div class="hcard" onclick="go('single')">
+          <div class="hc-icon">💰</div>
+          <div class="hc-title">Single Investment</div>
+          <div class="hc-desc">FV = PV·(1+r)^n. Any rate type and compounding period. Solve FV, PV, n or r.</div>
+        </div>
+        <div class="hcard" onclick="go('infl')">
+          <div class="hc-icon">📊</div>
+          <div class="hc-title">Inflation Adjustment</div>
+          <div class="hc-desc">Amount_n = Amount_0·(1+f)^n. Shows real purchasing-power erosion over time.</div>
+        </div>
+        <div class="hcard" onclick="go('date')">
+          <div class="hc-icon">📅</div>
+          <div class="hc-title">Date Converter</div>
+          <div class="hc-desc">Convert years ↔ months ↔ weeks ↔ days. Natural breakdown. Send to any calculator.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">Key Formulas — Study Unit 6</div>
+        <div class="fgrid">
+          <div class="frow"><span class="flbl">k-th period arrears FV</span><span class="feq">X · [(1+r)^k−1]/r × [(1+r)^km−(1+j)^m]/[(1+r)^k−(1+j)]</span></div>
+          <div class="frow"><span class="flbl">k-th period advance FV</span><span class="feq">FV_arrears × (1+r)</span></div>
+          <div class="frow"><span class="flbl">Any annuity PV</span><span class="feq">PV = FV × (1+r)^(−km)</span></div>
+          <div class="frow"><span class="flbl">Advance PV</span><span class="feq">PV_advance = PV_arrears × (1+r)</span></div>
+          <div class="frow"><span class="flbl">Every-next arrears FV</span><span class="feq">X × [(1+r)^n − (1+j)^n] / (r − j)</span></div>
+          <div class="frow"><span class="flbl">Every-next advance FV</span><span class="feq">FV_arrears × (1+r)</span></div>
+          <div class="frow"><span class="flbl">r from effective annual</span><span class="feq">r = (1+i_eff)^(1/p) − 1</span></div>
+          <div class="frow"><span class="flbl">Force of interest δ</span><span class="feq">δ = ln(1+i)   →   i = e^δ − 1</span></div>
+          <div class="frow"><span class="flbl">Nominal i^(p)</span><span class="feq">i_eff = (1 + i^(p)/p)^p − 1</span></div>
+          <div class="frow"><span class="flbl">Effective periodic i_p</span><span class="feq">i_eff = (1 + i_p)^p − 1</span></div>
+          <div class="frow"><span class="flbl">Single investment</span><span class="feq">FV = PV × (1+r)^n</span></div>
+          <div class="frow"><span class="flbl">Inflation adjustment</span><span class="feq">Amount_n = Amount_0 × (1+f)^n</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ K-TH PERIOD ══════ -->
+    <div class="panel" id="panel-kth">
+      <div class="ibox">
+        <strong>Every k-th period:</strong> Payments are constant (= X, X·(1+j), X·(1+j)², …) for groups of <em>k</em> consecutive periods. After each group the payment increases by <em>j%</em>. With <em>m</em> groups the total number of payment periods is <code>k × m</code>.<br>
+        <strong>Special case k=1</strong> → each individual payment increases → use the "Every Next Payment" panel instead.
+      </div>
+      <div class="card">
+        <div class="ch">Timing &amp; Solve for</div>
+        <div class="row-wrap">
+          <div class="fg" style="min-width:185px">
+            <label>Payment timing</label>
+            <select id="kth-timing" onchange="doKth()">
+              <option value="arrears">Arrears — end of period</option>
+              <option value="advance">Advance — start of period</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10.5px;font-weight:500;color:var(--txt2);display:block;margin-bottom:5px">Solve for</label>
+            <div class="pills">
+              <button class="pill on" onclick="setKth('fv',this)">Future Value</button>
+              <button class="pill"    onclick="setKth('pv',this)">Present Value</button>
+              <button class="pill"    onclick="setKth('x_fv',this)">X  given  FV</button>
+              <button class="pill"    onclick="setKth('x_pv',this)">X  given  PV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Interest Rate</div>
+        <div class="ga">
+          <div class="fg">
+            <label>Rate value (%)</label>
+            <input type="number" id="kth-rate" value="8" step="0.0001" oninput="doKth()">
+          </div>
+          <div class="fg">
+            <label>Rate type</label>
+            <select id="kth-rtype" onchange="doKth()">
+              <option value="nominal" selected>Nominal i^(p) — annualised</option>
+              <option value="effective_annual">Effective annual (i)</option>
+              <option value="effective_periodic">Effective periodic (i_p per period)</option>
+              <option value="force">Force of interest (δ)</option>
+              <option value="simple">Simple interest (per period)</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Rate compounding period</label>
+            <select id="kth-rper" onchange="onPeriodChange('kth-rper','kth-rper-cust');doKth()">
+              <option value="annual">Annual (p=1)</option><option value="semi_annual">Semi-annual (p=2)</option>
+              <option value="quarterly" selected>Quarterly (p=4)</option><option value="monthly">Monthly (p=12)</option>
+              <option value="weekly">Weekly (p=52)</option><option value="daily">Daily (p=365)</option>
+              <option value="other">Other — enter p below</option>
+            </select>
+            <div class="custom-per" id="kth-rper-cust">
+              <label>Payments per year p =</label>
+              <input type="number" id="kth-rper-p" value="1" min="1" step="1" oninput="doKth()">
+              <span class="hint">e.g. 3 = every 4 months</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Payment / compounding period</label>
+            <select id="kth-pper" onchange="onPeriodChange('kth-pper','kth-pper-cust');doKth()">
+              <option value="annual">Annual (p=1)</option><option value="semi_annual">Semi-annual (p=2)</option>
+              <option value="quarterly" selected>Quarterly (p=4)</option><option value="monthly">Monthly (p=12)</option>
+              <option value="weekly">Weekly (p=52)</option><option value="daily">Daily (p=365)</option>
+              <option value="other">Other — enter p below</option>
+            </select>
+            <div class="custom-per" id="kth-pper-cust">
+              <label>Payments per year p =</label>
+              <input type="number" id="kth-pper-p" value="1" min="1" step="1" oninput="doKth()">
+              <span class="hint">e.g. 3 = every 4 months</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Annuity Parameters</div>
+        <div class="ga">
+          <div class="fg"><label>First payment X (R) <span class="bi" id="kth-xb">INPUT</span></label><input type="number" id="kth-x" value="10000" oninput="doKth()"></div>
+          <div class="fg"><label>Increase per group j (%)</label><input type="number" id="kth-j" value="5" step="0.0001" oninput="doKth()"></div>
+          <div class="fg"><label>Periods per level group k</label><input type="number" id="kth-k" value="4" min="1" step="1" oninput="doKth()"></div>
+          <div class="fg"><label>Number of groups m</label><input type="number" id="kth-m" value="10" min="1" step="1" oninput="doKth()"></div>
+          <div class="fg"><label>Future Value FV (R) <span class="bi" id="kth-fvb">INPUT</span></label><input type="number" id="kth-fv" placeholder="—" oninput="doKth()"></div>
+          <div class="fg"><label>Present Value PV (R) <span class="bi" id="kth-pvb">INPUT</span></label><input type="number" id="kth-pv" placeholder="—" oninput="doKth()"></div>
+        </div>
+        <div class="err" id="kth-err"></div>
+      </div>
+
+      <div class="tiles" id="kth-tiles"></div>
+
+      <div class="card">
+        <div class="ch">FV contribution per level group</div>
+        <div class="chbox"><canvas id="kth-chart" aria-label="Bar chart showing FV contribution per level group"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══════ EVERY NEXT PAYMENT ══════ -->
+    <div class="panel" id="panel-next">
+      <div class="ibox">
+        <strong>Every-next-payment:</strong> Each individual payment is <em>j%</em> larger than the previous one — this is the k=1 special case. Formula: <code>FV = X·[(1+r)^n − (1+j)^n] / (r − j)</code>. Use when the payment increases with every single payment period, not grouped.
+      </div>
+      <div class="card">
+        <div class="ch">Timing &amp; Solve for</div>
+        <div class="row-wrap">
+          <div class="fg" style="min-width:185px">
+            <label>Payment timing</label>
+            <select id="nxt-timing" onchange="doNext()">
+              <option value="arrears">Arrears — end of period</option>
+              <option value="advance">Advance — start of period</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10.5px;font-weight:500;color:var(--txt2);display:block;margin-bottom:5px">Solve for</label>
+            <div class="pills">
+              <button class="pill on" onclick="setNext('fv',this)">Future Value</button>
+              <button class="pill"    onclick="setNext('pv',this)">Present Value</button>
+              <button class="pill"    onclick="setNext('x_fv',this)">X  given  FV</button>
+              <button class="pill"    onclick="setNext('x_pv',this)">X  given  PV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Interest Rate</div>
+        <div class="ga">
+          <div class="fg"><label>Rate value (%)</label><input type="number" id="nxt-rate" value="8" step="0.0001" oninput="doNext()"></div>
+          <div class="fg">
+            <label>Rate type</label>
+            <select id="nxt-rtype" onchange="doNext()">
+              <option value="nominal" selected>Nominal i^(p) — annualised</option>
+              <option value="effective_annual">Effective annual (i)</option>
+              <option value="effective_periodic">Effective periodic (i_p per period)</option>
+              <option value="force">Force of interest (δ)</option>
+              <option value="simple">Simple interest (per period)</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Rate compounding period</label>
+            <select id="nxt-rper" onchange="onPeriodChange('nxt-rper','nxt-rper-cust');doNext()">
+              <option value="annual">Annual (p=1)</option><option value="semi_annual">Semi-annual (p=2)</option>
+              <option value="quarterly" selected>Quarterly (p=4)</option><option value="monthly">Monthly (p=12)</option>
+              <option value="weekly">Weekly (p=52)</option><option value="daily">Daily (p=365)</option>
+              <option value="other">Other — enter p below</option>
+            </select>
+            <div class="custom-per" id="nxt-rper-cust">
+              <label>Payments per year p =</label>
+              <input type="number" id="nxt-rper-p" value="1" min="1" step="1" oninput="doNext()">
+              <span class="hint">e.g. 3 = every 4 months</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Payment / compounding period</label>
+            <select id="nxt-pper" onchange="onPeriodChange('nxt-pper','nxt-pper-cust');doNext()">
+              <option value="annual">Annual (p=1)</option><option value="semi_annual">Semi-annual (p=2)</option>
+              <option value="quarterly" selected>Quarterly (p=4)</option><option value="monthly">Monthly (p=12)</option>
+              <option value="weekly">Weekly (p=52)</option><option value="daily">Daily (p=365)</option>
+              <option value="other">Other — enter p below</option>
+            </select>
+            <div class="custom-per" id="nxt-pper-cust">
+              <label>Payments per year p =</label>
+              <input type="number" id="nxt-pper-p" value="1" min="1" step="1" oninput="doNext()">
+              <span class="hint">e.g. 3 = every 4 months</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Annuity Parameters</div>
+        <div class="ga">
+          <div class="fg"><label>First payment X (R) <span class="bi" id="nxt-xb">INPUT</span></label><input type="number" id="nxt-x" value="10000" oninput="doNext()"></div>
+          <div class="fg"><label>Increase per payment j (%)</label><input type="number" id="nxt-j" value="1" step="0.0001" oninput="doNext()"></div>
+          <div class="fg"><label>Total number of payments n</label><input type="number" id="nxt-n" value="40" min="1" step="1" oninput="doNext()"></div>
+          <div class="fg"><label>Future Value FV (R) <span class="bi" id="nxt-fvb">INPUT</span></label><input type="number" id="nxt-fv" placeholder="—" oninput="doNext()"></div>
+          <div class="fg"><label>Present Value PV (R) <span class="bi" id="nxt-pvb">INPUT</span></label><input type="number" id="nxt-pv" placeholder="—" oninput="doNext()"></div>
+        </div>
+        <div class="err" id="nxt-err"></div>
+      </div>
+
+      <div class="tiles" id="nxt-tiles"></div>
+
+      <div class="card">
+        <div class="ch">Payment escalation over time</div>
+        <div class="chbox"><canvas id="nxt-chart" aria-label="Line chart showing payment growth over time"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══════ SINGLE INVESTMENT ══════ -->
+    <div class="panel" id="panel-single">
+      <div class="card">
+        <div class="ch">Solve for</div>
+        <div class="pills">
+          <button class="pill on" onclick="setSI('fv',this)">Future Value</button>
+          <button class="pill"    onclick="setSI('pv',this)">Present Value</button>
+          <button class="pill"    onclick="setSI('n',this)">Periods n</button>
+          <button class="pill"    onclick="setSI('r',this)">Rate r</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Inputs</div>
+        <div class="ga">
+          <div class="fg"><label>Rate value (%) <span class="bi" id="si-rb">INPUT</span></label><input type="number" id="si-rate" value="8" step="0.0001" oninput="doSI()"></div>
+          <div class="fg">
+            <label>Rate type</label>
+            <select id="si-rtype" onchange="doSI()">
+              <option value="nominal" selected>Nominal i^(p) — annualised</option>
+              <option value="effective_annual">Effective annual (i)</option>
+              <option value="effective_periodic">Effective periodic (i_p per period)</option>
+              <option value="force">Force of interest (δ)</option>
+              <option value="simple">Simple interest (per period)</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Rate compounding period</label>
+            <select id="si-rper" onchange="onPeriodChange('si-rper','si-rper-cust');doSI()">
+              <option value="annual">Annual (p=1)</option><option value="semi_annual">Semi-annual (p=2)</option>
+              <option value="quarterly">Quarterly (p=4)</option><option value="monthly" selected>Monthly (p=12)</option>
+              <option value="weekly">Weekly (p=52)</option><option value="daily">Daily (p=365)</option>
+              <option value="other">Other — enter p below</option>
+            </select>
+            <div class="custom-per" id="si-rper-cust">
+              <label>Payments per year p =</label>
+              <input type="number" id="si-rper-p" value="1" min="1" step="1" oninput="doSI()">
+              <span class="hint">e.g. 3 = every 4 months</span>
+            </div>
+          </div>
+          <div class="fg">
+            <label>Compounding / investment period</label>
+            <select id="si-pper" onchange="onPeriodChange('si-pper','si-pper-cust');doSI()">
+              <option value="annual">Annual (p=1)</option><option value="semi_annual">Semi-annual (p=2)</option>
+              <option value="quarterly">Quarterly (p=4)</option><option value="monthly" selected>Monthly (p=12)</option>
+              <option value="weekly">Weekly (p=52)</option><option value="daily">Daily (p=365)</option>
+              <option value="other">Other — enter p below</option>
+            </select>
+            <div class="custom-per" id="si-pper-cust">
+              <label>Payments per year p =</label>
+              <input type="number" id="si-pper-p" value="1" min="1" step="1" oninput="doSI()">
+              <span class="hint">e.g. 3 = every 4 months</span>
+            </div>
+          </div>
+          <div class="fg"><label>Present Value (R) <span class="bi" id="si-pvb">INPUT</span></label><input type="number" id="si-pv" value="30000" oninput="doSI()"></div>
+          <div class="fg"><label>Future Value (R) <span class="bi" id="si-fvb">INPUT</span></label><input type="number" id="si-fv" placeholder="—" oninput="doSI()"></div>
+          <div class="fg"><label>Periods n <span class="bi" id="si-nb">INPUT</span></label><input type="number" id="si-n" value="84" oninput="doSI()"></div>
+        </div>
+        <div class="err" id="si-err"></div>
+      </div>
+
+      <div class="tiles" id="si-tiles"></div>
+
+      <div class="card">
+        <div class="ch">Investment growth — FV = PV · (1+r)^n</div>
+        <div class="chbox"><canvas id="si-chart" aria-label="Line chart of investment growth over time"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══════ INFLATION ══════ -->
+    <div class="panel" id="panel-infl">
+      <div class="ibox">
+        <strong>Inflation adjustment:</strong> Adjusts a present-day amount to its equivalent future value after inflation erodes purchasing power. Formula: <code>Amount_n = Amount_0 × (1 + f)^n</code>. Also used to find the inflation-adjusted first withdrawal in retirement planning.
+      </div>
+      <div class="card">
+        <div class="ch">Inputs</div>
+        <div class="ga">
+          <div class="fg"><label>Starting amount (R)</label><input type="number" id="infl-amt" value="8000" oninput="doInfl()"></div>
+          <div class="fg"><label>Annual inflation rate f (%)</label><input type="number" id="infl-f" value="6" step="0.01" oninput="doInfl()"></div>
+          <div class="fg"><label>Number of years n</label><input type="number" id="infl-n" value="9" step="0.5" oninput="doInfl()"></div>
+        </div>
+        <div class="err" id="infl-err"></div>
+      </div>
+
+      <div class="tiles" id="infl-tiles"></div>
+
+      <div class="card">
+        <div class="ch">Inflation-adjusted value over time</div>
+        <div class="chbox"><canvas id="infl-chart" aria-label="Line chart of inflation-adjusted value"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══════ DATE CONVERTER ══════ -->
+    <div class="panel" id="panel-date">
+      <div class="card">
+        <div class="ch">Enter a value in any one unit — all others update automatically</div>
+        <div class="dc-grid">
+          <div class="dc-u">
+            <div class="dc-ul">Years</div>
+            <input type="number" id="dc-y" placeholder="e.g. 10" step="0.001" oninput="dcCalc('years',this.value)">
+            <div class="dc-note" id="dc-yn">—</div>
+          </div>
+          <div class="dc-u">
+            <div class="dc-ul">Months</div>
+            <input type="number" id="dc-m" placeholder="e.g. 120" step="0.01" oninput="dcCalc('months',this.value)">
+            <div class="dc-note" id="dc-mn">—</div>
+          </div>
+          <div class="dc-u">
+            <div class="dc-ul">Weeks</div>
+            <input type="number" id="dc-w" placeholder="e.g. 521" step="0.1" oninput="dcCalc('weeks',this.value)">
+            <div class="dc-note" id="dc-wn">—</div>
+          </div>
+          <div class="dc-u">
+            <div class="dc-ul">Days</div>
+            <input type="number" id="dc-d" placeholder="e.g. 3653" step="1" oninput="dcCalc('days',this.value)">
+            <div class="dc-note" id="dc-dn">—</div>
+          </div>
+        </div>
+        <div class="dc-sum" id="dc-sum" style="display:none">
+          <h4>Natural breakdown</h4>
+          <div class="dc-phrase" id="dc-ph">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Quick reference — click to load</div>
+        <div class="qgrid">
+          <div class="qc" onclick="dcLoad(0.25)"><div class="qc-n">1 Quarter</div><div class="qc-v">0.25 yrs</div></div>
+          <div class="qc" onclick="dcLoad(0.5)"><div class="qc-n">6 Months</div><div class="qc-v">0.5 yrs</div></div>
+          <div class="qc" onclick="dcLoad(1)"><div class="qc-n">1 Year</div><div class="qc-v">1 yr</div></div>
+          <div class="qc" onclick="dcLoad(2)"><div class="qc-n">2 Years</div><div class="qc-v">2 yrs</div></div>
+          <div class="qc" onclick="dcLoad(3)"><div class="qc-n">3 Years</div><div class="qc-v">3 yrs</div></div>
+          <div class="qc" onclick="dcLoad(5)"><div class="qc-n">5 Years</div><div class="qc-v">5 yrs</div></div>
+          <div class="qc" onclick="dcLoad(10)"><div class="qc-n">10 Years</div><div class="qc-v">10 yrs</div></div>
+          <div class="qc" onclick="dcLoad(15)"><div class="qc-n">15 Years</div><div class="qc-v">15 yrs</div></div>
+          <div class="qc" onclick="dcLoad(20)"><div class="qc-n">20 Years</div><div class="qc-v">20 yrs</div></div>
+          <div class="qc" onclick="dcLoad(30)"><div class="qc-n">30 Years</div><div class="qc-v">30 yrs</div></div>
+          <div class="qc" onclick="dcLoad(40)"><div class="qc-n">40 Years</div><div class="qc-v">40 yrs</div></div>
+          <div class="qc" onclick="dcLoad(60)"><div class="qc-n">60 Years</div><div class="qc-v">60 yrs</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch">Send to calculator</div>
+        <div class="srow">
+          <button class="sb2" onclick="dcSend('kth-k','kth')">→ k-th: periods k</button>
+          <button class="sb2" onclick="dcSend('kth-m','kth')">→ k-th: groups m</button>
+          <button class="sb2" onclick="dcSend('nxt-n','next')">→ Next: payments n</button>
+          <button class="sb2" onclick="dcSend('si-n','single')">→ Single: periods n</button>
+          <button class="sb2" onclick="dcSend('infl-n','infl')">→ Inflation: years</button>
+          <button class="sb2 del" onclick="dcClear()">✕ Clear</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  MATH ENGINE — all formulas from NWU Study Unit 6
+//  Verified against Check_list_for_Assignment_6.xlsx
+// ═══════════════════════════════════════════════════════════════
+
+const PERIODS = {annual:1,semi_annual:2,quarterly:4,monthly:12,weekly:52,daily:365};
+
+function safe(v){ return (v==null||isNaN(v)||!isFinite(v)) ? null : v; }
+
+/**
+ * Show/hide the custom-p input row when user picks "Other".
+ * Called from every period select's onchange.
+ * @param {string} selId   – id of the <select>
+ * @param {string} custId  – id of the .custom-per div below it
+ */
+function onPeriodChange(selId, custId){
+  const sel = document.getElementById(selId);
+  const box = document.getElementById(custId);
+  if(!sel || !box) return;
+  box.classList.toggle('show', sel.value === 'other');
+}
+
+/**
+ * Resolve the numeric p (payments/compoundings per year) for a period select.
+ * If the select is "other", read the companion input.
+ * @param {string} selId   – id of the <select>
+ * @param {string} custPId – id of the custom-p <input> (e.g. "kth-rper-p")
+ */
+function getP(selId, custPId){
+  const sel = document.getElementById(selId);
+  if(!sel) return 1;
+  if(sel.value === 'other'){
+    const n = parseFloat(document.getElementById(custPId)?.value);
+    return (isNaN(n) || n < 1) ? 1 : n;
+  }
+  return PERIODS[sel.value] || 1;
+}
+
+/** Any rate (%) → effective annual i (decimal).
+ *  period can be a key string OR a numeric p value directly. */
+function toEffAnn(pct, rtype, period){
+  const r = pct/100;
+  const p = (typeof period === 'number') ? period : (PERIODS[period] || 1);
+  if(rtype==='force')             return Math.exp(r)-1;
+  if(rtype==='effective_annual')  return r;
+  if(rtype==='effective_periodic')return Math.pow(1+r, p)-1;
+  if(rtype==='nominal')           return Math.pow(1+r/p, p)-1;
+  if(rtype==='simple')            return r*p;
+  return r;
+}
+
+/** Input rate → effective rate per payment period r.
+ *  Accepts numeric p values directly so callers can pass getP() results. */
+function getR(pct, rtype, pRper, pPper){
+  // pRper / pPper may be a numeric p (from getP) or a period key string
+  const pR = (typeof pRper === 'number') ? pRper : (PERIODS[pRper] || 1);
+  const pP = (typeof pPper === 'number') ? pPper : (PERIODS[pPper] || 1);
+  const iEff = toEffAnn(pct, rtype, pR);
+  return Math.pow(1+iEff, 1/pP)-1;
+}
+
+// ── k-th period ────────────────────────────────────────────────
+// FV_arr = X * [(1+r)^k-1]/r * [(1+r)^(km)-(1+j)^m] / [(1+r)^k-(1+j)]
+function kthFvArr(X,r,j,k,m){
+  if(r===0) return null;
+  const A = (Math.pow(1+r,k)-1)/r;
+  const denom = Math.pow(1+r,k)-(1+j);
+  if(Math.abs(denom)<1e-12) return X*k*m*Math.pow(1+r,k*m-1);
+  const B = (Math.pow(1+r,k*m)-Math.pow(1+j,m))/denom;
+  return X*A*B;
+}
+function kthPvArr(X,r,j,k,m){ const fv=kthFvArr(X,r,j,k,m); return fv!=null?fv*Math.pow(1+r,-(k*m)):null; }
+function kthFvAdv(X,r,j,k,m){ const fv=kthFvArr(X,r,j,k,m); return fv!=null?fv*(1+r):null; }
+function kthPvAdv(X,r,j,k,m){ const pv=kthPvArr(X,r,j,k,m); return pv!=null?pv*(1+r):null; }
+
+// ── Every-next-payment ─────────────────────────────────────────
+// FV_arr = X * [(1+r)^n - (1+j)^n] / (r - j)
+function nxtFvArr(X,r,j,n){
+  if(Math.abs(r-j)<1e-12) return X*n*Math.pow(1+r,n-1);
+  return X*(Math.pow(1+r,n)-Math.pow(1+j,n))/(r-j);
+}
+function nxtPvArr(X,r,j,n){ const fv=nxtFvArr(X,r,j,n); return fv!=null?fv*Math.pow(1+r,-n):null; }
+function nxtFvAdv(X,r,j,n){ const fv=nxtFvArr(X,r,j,n); return fv!=null?fv*(1+r):null; }
+function nxtPvAdv(X,r,j,n){ const pv=nxtPvArr(X,r,j,n); return pv!=null?pv*(1+r):null; }
+
+// ── Single investment ─────────────────────────────────────────
+function siFv(pv,r,n){ return pv*Math.pow(1+r,n); }
+function siPv(fv,r,n){ return fv*Math.pow(1+r,-n); }
+
+// ── Inflation ─────────────────────────────────────────────────
+function inflAdj(amt,f,n){ return amt*Math.pow(1+f/100,n); }
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+
+const META={
+  home:  {t:'Dashboard',          s:'Increasing annuities — Study Unit 6 · BMI 111',        p:'FV = X·[(1+r)^k−1]/r · [(1+r)^km−(1+j)^m]/[(1+r)^k−(1+j)]'},
+  kth:   {t:'Every k-th Period',  s:'Constant for k periods, then increases by j%',          p:'FV = X·[(1+r)^k−1]/r · [(1+r)^km−(1+j)^m]/[(1+r)^k−(1+j)]'},
+  next:  {t:'Every Next Payment', s:'Each payment j% larger than the previous one (k=1)',   p:'FV = X·[(1+r)^n−(1+j)^n] / (r−j)'},
+  single:{t:'Single Investment',  s:'FV = PV·(1+r)^n — any rate type and period',           p:'FV = PV·(1+r)^n'},
+  infl:  {t:'Inflation Adjustment',s:'Real purchasing-power adjustment: Amount × (1+f)^n',  p:'Amount_n = Amount_0·(1+f)^n'},
+  date:  {t:'Date Converter',     s:'Years ↔ months ↔ weeks ↔ days',                        p:'1 yr = 12 mths = 52.1775 wks = 365.25 days'},
+};
+
+function go(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('panel-'+id).classList.add('on');
+  if(btn) btn.classList.add('on');
+  else{
+    const b=[...document.querySelectorAll('.nb')].find(b=>b.getAttribute('onclick')?.includes("'"+id+"'"));
+    if(b) b.classList.add('on');
+  }
+  const m=META[id];
+  document.getElementById('tbt').textContent=m.t;
+  document.getElementById('tbs').textContent=m.s;
+  document.getElementById('tbp').textContent=m.p;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FORMATTING
+// ═══════════════════════════════════════════════════════════════
+
+const R  = v => v==null ? '—' : 'R\u202f'+Number(v).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const Pc = (v,d=6) => v==null ? '—' : Number(v).toFixed(d)+'%';
+const Fx = (v,d=2) => v==null ? '—' : Number(v).toFixed(d);
+const $  = id => document.getElementById(id);
+const fv = id => { const v=parseFloat($(id)?.value); return isNaN(v)?null:v; };
+const sv = id => $(id)?.value||'';
+
+// ═══════════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════════
+
+const charts={};
+const PU='rgba(120,85,192,1)',TL='rgba(34,168,144,1)',GD='rgba(223,168,60,1)';
+const PUA='rgba(120,85,192,0.18)',TLA='rgba(34,168,144,0.14)',GDA='rgba(223,168,60,0.16)';
+const GR='rgba(255,255,255,0.045)',TK='#5a5a7a';
+
+function mkBar(id,labels,vals,label='Value'){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart($(id),{type:'bar',
+    data:{labels,datasets:[{label,data:vals,backgroundColor:PU,borderWidth:0,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{color:TK,callback:v=>'R'+Number(v).toLocaleString()},grid:{color:GR}},
+              x:{ticks:{color:TK,maxTicksLimit:20},grid:{display:false}}}}});
+}
+
+function mkLine(id,datasets,labels){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart($(id),{type:'line',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#888',usePointStyle:true,pointStyle:'line'}}},
+      scales:{y:{ticks:{color:TK,callback:v=>'R'+Number(v).toLocaleString()},grid:{color:GR}},
+              x:{ticks:{color:TK,maxTicksLimit:10,autoSkip:true},grid:{display:false}}}}});
+}
+
+function mkLineSimple(id,labels,vals,label,color,fillColor){
+  mkLine(id,[{label,data:vals,borderColor:color,backgroundColor:fillColor,fill:true,tension:0.35,pointRadius:0,borderWidth:2}],labels);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SOLVE-FOR HELPERS (badge + readonly toggling)
+// ═══════════════════════════════════════════════════════════════
+
+function setOutput(inputId, badgeId){
+  const el=$(inputId); el.classList.add('out'); el.readOnly=true; el.value=''; el.placeholder='Calculated';
+  const b=$(badgeId); if(b){b.textContent='OUTPUT';b.className='bo';}
+}
+function setInput(inputId, badgeId){
+  const el=$(inputId); el.classList.remove('out'); el.readOnly=false; el.placeholder='—';
+  const b=$(badgeId); if(b){b.textContent='INPUT';b.className='bi';}
+}
+function writeOut(inputId, val){
+  $(inputId).value = val!=null ? Number(val).toFixed(4) : '';
+}
+function showErr(errId, msg){ const e=$(errId); e.textContent=msg; e.style.display='block'; }
+function hideErr(errId){ $(errId).style.display='none'; }
+
+// ═══════════════════════════════════════════════════════════════
+//  K-TH PERIOD
+// ═══════════════════════════════════════════════════════════════
+
+let kthSolve='fv';
+
+function setKth(s,btn){
+  kthSolve=s;
+  document.querySelectorAll('#panel-kth .pill').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  [['kth-x','kth-xb'],['kth-fv','kth-fvb'],['kth-pv','kth-pvb']].forEach(([i,b])=>setInput(i,b));
+  const outMap={fv:['kth-fv','kth-fvb'],pv:['kth-pv','kth-pvb'],x_fv:['kth-x','kth-xb'],x_pv:['kth-x','kth-xb']};
+  setOutput(...outMap[s]);
+  doKth();
+}
+
+function doKth(){
+  try{
+    const timing=sv('kth-timing');
+    const r=getR(fv('kth-rate')||0, sv('kth-rtype'),
+                 getP('kth-rper','kth-rper-p'), getP('kth-pper','kth-pper-p'));
+    const j=(fv('kth-j')||0)/100;
+    const k=Math.max(1,Math.round(fv('kth-k')||4));
+    const m=Math.max(1,Math.round(fv('kth-m')||10));
+    const adv=timing==='advance';
+    const FFV=adv?kthFvAdv:kthFvArr, FPV=adv?kthPvAdv:kthPvArr;
+
+    let X=fv('kth-x'), FV=fv('kth-fv'), PV=fv('kth-pv');
+
+    if(kthSolve==='fv'){
+      if(X==null){ showErr('kth-err','Enter first payment X.'); return; }
+      FV=FFV(X,r,j,k,m); PV=safe(FV)*Math.pow(1+r,-(k*m));
+    } else if(kthSolve==='pv'){
+      if(X==null){ showErr('kth-err','Enter first payment X.'); return; }
+      PV=FPV(X,r,j,k,m); FV=safe(PV)*Math.pow(1+r,(k*m));
+    } else if(kthSolve==='x_fv'){
+      if(FV==null){ showErr('kth-err','Enter Future Value.'); return; }
+      const u=FFV(1,r,j,k,m); X=u?FV/u:null; PV=safe(FV)*Math.pow(1+r,-(k*m));
+    } else if(kthSolve==='x_pv'){
+      if(PV==null){ showErr('kth-err','Enter Present Value.'); return; }
+      const u=FPV(1,r,j,k,m); X=u?PV/u:null; FV=safe(PV)*Math.pow(1+r,(k*m));
+    }
+
+    hideErr('kth-err');
+    const outMap={fv:'kth-fv',pv:'kth-pv',x_fv:'kth-x',x_pv:'kth-x'};
+    const valMap={fv:FV,pv:PV,x_fv:X,x_pv:X};
+    writeOut(outMap[kthSolve], valMap[kthSolve]);
+
+    const tp=X!=null?X*k*m:null, ie=FV!=null&&tp!=null?FV-tp:null;
+    $('kth-tiles').innerHTML=`
+      <div class="tile hi"><div class="tl">Future Value</div><div class="tv teal">${R(FV)}</div></div>
+      <div class="tile hi"><div class="tl">Present Value</div><div class="tv purple">${R(PV)}</div></div>
+      <div class="tile"><div class="tl">First payment X</div><div class="tv">${R(X)}</div></div>
+      <div class="tile"><div class="tl">r per pay period</div><div class="tv">${Pc(r*100,6)}</div></div>
+      <div class="tile"><div class="tl">Increase j per group</div><div class="tv">${Pc(j*100,4)}</div></div>
+      <div class="tile"><div class="tl">Total periods k×m</div><div class="tv">${k*m}</div></div>
+      <div class="tile"><div class="tl">Total deposited</div><div class="tv">${R(tp)}</div></div>
+      <div class="tile"><div class="tl">Interest earned</div><div class="tv gold">${R(ie)}</div></div>`;
+
+    // Chart: FV contribution of each group accumulated to end
+    if(X!=null && r!=null && m>0){
+      const labels=[], vals=[];
+      const FFV1=adv?kthFvAdv:kthFvArr;
+      for(let g=1;g<=m;g++){
+        const Xg=X*Math.pow(1+j,g-1);
+        const fvGroup=FFV1(Xg,r,0,k,1);
+        const accPeriods=k*(m-g);
+        labels.push('G'+g);
+        vals.push(safe(fvGroup!=null?fvGroup*Math.pow(1+r,accPeriods):0));
+      }
+      mkBar('kth-chart',labels,vals,'FV contribution to end');
+    }
+  } catch(e){ showErr('kth-err',e.message); }
+}
+doKth();
+
+// ═══════════════════════════════════════════════════════════════
+//  EVERY NEXT PAYMENT
+// ═══════════════════════════════════════════════════════════════
+
+let nxtSolve='fv';
+
+function setNext(s,btn){
+  nxtSolve=s;
+  document.querySelectorAll('#panel-next .pill').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  [['nxt-x','nxt-xb'],['nxt-fv','nxt-fvb'],['nxt-pv','nxt-pvb']].forEach(([i,b])=>setInput(i,b));
+  const outMap={fv:['nxt-fv','nxt-fvb'],pv:['nxt-pv','nxt-pvb'],x_fv:['nxt-x','nxt-xb'],x_pv:['nxt-x','nxt-xb']};
+  setOutput(...outMap[s]);
+  doNext();
+}
+
+function doNext(){
+  try{
+    const timing=sv('nxt-timing');
+    const r=getR(fv('nxt-rate')||0, sv('nxt-rtype'),
+                 getP('nxt-rper','nxt-rper-p'), getP('nxt-pper','nxt-pper-p'));
+    const j=(fv('nxt-j')||0)/100;
+    const n=Math.max(1,Math.round(fv('nxt-n')||40));
+    const adv=timing==='advance';
+    const FFV=adv?nxtFvAdv:nxtFvArr, FPV=adv?nxtPvAdv:nxtPvArr;
+
+    let X=fv('nxt-x'), FV=fv('nxt-fv'), PV=fv('nxt-pv');
+
+    if(nxtSolve==='fv'){
+      if(X==null){ showErr('nxt-err','Enter first payment X.'); return; }
+      FV=FFV(X,r,j,n); PV=FV!=null?FV*Math.pow(1+r,-n):null;
+    } else if(nxtSolve==='pv'){
+      if(X==null){ showErr('nxt-err','Enter first payment X.'); return; }
+      PV=FPV(X,r,j,n); FV=PV!=null?PV*Math.pow(1+r,n):null;
+    } else if(nxtSolve==='x_fv'){
+      if(FV==null){ showErr('nxt-err','Enter Future Value.'); return; }
+      const u=FFV(1,r,j,n); X=u?FV/u:null; PV=FV!=null?FV*Math.pow(1+r,-n):null;
+    } else if(nxtSolve==='x_pv'){
+      if(PV==null){ showErr('nxt-err','Enter Present Value.'); return; }
+      const u=FPV(1,r,j,n); X=u?PV/u:null; FV=PV!=null?PV*Math.pow(1+r,n):null;
+    }
+
+    hideErr('nxt-err');
+    const outMap={fv:'nxt-fv',pv:'nxt-pv',x_fv:'nxt-x',x_pv:'nxt-x'};
+    const valMap={fv:FV,pv:PV,x_fv:X,x_pv:X};
+    writeOut(outMap[nxtSolve], valMap[nxtSolve]);
+
+    let tp=0;
+    if(X!=null){ for(let t=0;t<n;t++) tp+=X*Math.pow(1+j,t); }
+    const ie=FV!=null?FV-tp:null;
+    $('nxt-tiles').innerHTML=`
+      <div class="tile hi"><div class="tl">Future Value</div><div class="tv teal">${R(FV)}</div></div>
+      <div class="tile hi"><div class="tl">Present Value</div><div class="tv purple">${R(PV)}</div></div>
+      <div class="tile"><div class="tl">First payment X</div><div class="tv">${R(X)}</div></div>
+      <div class="tile"><div class="tl">r per pay period</div><div class="tv">${Pc(r*100,6)}</div></div>
+      <div class="tile"><div class="tl">Increase j per pmt</div><div class="tv">${Pc(j*100,4)}</div></div>
+      <div class="tile"><div class="tl">Total payments n</div><div class="tv">${n}</div></div>
+      <div class="tile"><div class="tl">Total deposited</div><div class="tv">${R(tp||null)}</div></div>
+      <div class="tile"><div class="tl">Interest earned</div><div class="tv gold">${R(ie)}</div></div>`;
+
+    if(X!=null && n>0){
+      const step=Math.max(1,Math.floor(n/60));
+      const pts=[], vals=[];
+      for(let t=0;t<=n;t+=step){ pts.push(t); vals.push(parseFloat((X*Math.pow(1+j,t)).toFixed(4))); }
+      mkLineSimple('nxt-chart',pts,vals,'Payment amount',TL,TLA);
+    }
+  } catch(e){ showErr('nxt-err',e.message); }
+}
+doNext();
+
+// ═══════════════════════════════════════════════════════════════
+//  SINGLE INVESTMENT
+// ═══════════════════════════════════════════════════════════════
+
+let siSolve='fv';
+const SI_IDS={fv:'si-fv',pv:'si-pv',n:'si-n',r:'si-rate'};
+const SI_BADGES={fv:'si-fvb',pv:'si-pvb',n:'si-nb',r:'si-rb'};
+
+function setSI(s,btn){
+  siSolve=s;
+  document.querySelectorAll('#panel-single .pill').forEach(b=>b.classList.remove('on')); btn.classList.add('on');
+  Object.entries(SI_IDS).forEach(([k,id])=>setInput(id,SI_BADGES[k]));
+  setOutput(SI_IDS[s],SI_BADGES[s]);
+  doSI();
+}
+
+function doSI(){
+  try{
+    let rate=fv('si-rate'), rtype=sv('si-rtype'), rper=sv('si-rper'), pper=sv('si-pper');
+    let pv=fv('si-pv'), fvVal=fv('si-fv'), n=fv('si-n');
+    let r=siSolve==='r' ? null : getR(rate||0, rtype,
+                 getP('si-rper','si-rper-p'), getP('si-pper','si-pper-p'));
+
+    if(siSolve==='fv'){
+      if(pv==null||n==null){ showErr('si-err','Enter PV and n.'); return; }
+      fvVal=siFv(pv,r,n);
+    } else if(siSolve==='pv'){
+      if(fvVal==null||n==null){ showErr('si-err','Enter FV and n.'); return; }
+      pv=siPv(fvVal,r,n);
+    } else if(siSolve==='n'){
+      if(pv==null||fvVal==null||pv<=0||fvVal<=pv){ showErr('si-err','Need PV < FV.'); return; }
+      n=safe(Math.log(fvVal/pv)/Math.log(1+r));
+    } else if(siSolve==='r'){
+      if(pv==null||fvVal==null||n==null||pv<=0||fvVal<=pv){ showErr('si-err','Need PV < FV and n.'); return; }
+      r=safe(Math.pow(fvVal/pv,1/n)-1);
+    }
+
+    hideErr('si-err');
+    const vals={fv:fvVal,pv,n,r:r!=null?r*100:null};
+    writeOut(SI_IDS[siSolve], vals[siSolve]);
+
+    const interest=fvVal!=null&&pv!=null?fvVal-pv:null;
+    $('si-tiles').innerHTML=`
+      <div class="tile hi"><div class="tl">Future Value</div><div class="tv teal">${R(fvVal)}</div></div>
+      <div class="tile hi"><div class="tl">Present Value</div><div class="tv purple">${R(pv)}</div></div>
+      <div class="tile"><div class="tl">Interest earned</div><div class="tv gold">${R(interest)}</div></div>
+      <div class="tile"><div class="tl">r per period</div><div class="tv">${Pc(r!=null?r*100:null,6)}</div></div>
+      <div class="tile"><div class="tl">Periods n</div><div class="tv">${Fx(n,4)}</div></div>`;
+
+    if(pv!=null && r!=null && n!=null && n>0){
+      const steps=Math.min(Math.round(n),120);
+      const labels=[], vals2=[];
+      for(let i=0;i<=steps;i++){
+        const t=i/steps*n; labels.push(parseFloat(t.toFixed(2)));
+        vals2.push(parseFloat(siFv(pv,r,t).toFixed(4)));
+      }
+      mkLineSimple('si-chart',labels,vals2,'Investment value',PU,PUA);
+    }
+  } catch(e){ showErr('si-err',e.message); }
+}
+doSI();
+
+// ═══════════════════════════════════════════════════════════════
+//  INFLATION ADJUSTMENT
+// ═══════════════════════════════════════════════════════════════
+
+function doInfl(){
+  try{
+    const amt=fv('infl-amt'), f=fv('infl-f'), n=fv('infl-n');
+    if(amt==null||f==null||n==null){ showErr('infl-err','Enter all fields.'); return; }
+    const result=inflAdj(amt,f,n);
+    hideErr('infl-err');
+    const mult=result/amt;
+    $('infl-tiles').innerHTML=`
+      <div class="tile hi"><div class="tl">Adjusted amount</div><div class="tv teal">${R(result)}</div></div>
+      <div class="tile"><div class="tl">Original amount</div><div class="tv">${R(amt)}</div></div>
+      <div class="tile"><div class="tl">Increase</div><div class="tv gold">${R(result-amt)}</div></div>
+      <div class="tile"><div class="tl">Growth multiplier</div><div class="tv">${mult.toFixed(4)}×</div></div>`;
+    const steps=Math.min(Math.round(n),120), labels=[], vals=[];
+    for(let i=0;i<=steps;i++){ const t=i/steps*n; labels.push(parseFloat(t.toFixed(2))); vals.push(parseFloat(inflAdj(amt,f,t).toFixed(4))); }
+    mkLineSimple('infl-chart',labels,vals,'Adjusted value',GD,GDA);
+  } catch(e){ showErr('infl-err',e.message); }
+}
+doInfl();
+
+// ═══════════════════════════════════════════════════════════════
+//  DATE CONVERTER  (pure JS — no server)
+// ═══════════════════════════════════════════════════════════════
+
+let dcYrs=null;
+
+function dcCalc(unit,value){
+  const v=parseFloat(value); if(isNaN(v)||v<0) return;
+  const conv={years:1,months:1/12,weeks:1/52.1775,days:1/365.25};
+  dcYrs=v*conv[unit];
+  const y=dcYrs, m=y*12, w=y*52.1775, d=y*365.25;
+  $('dc-y').value=unit==='years'  ?value:y.toFixed(6);
+  $('dc-m').value=unit==='months' ?value:m.toFixed(4);
+  $('dc-w').value=unit==='weeks'  ?value:w.toFixed(4);
+  $('dc-d').value=unit==='days'   ?value:d.toFixed(2);
+  $('dc-yn').textContent=y.toFixed(6)+' years';
+  $('dc-mn').textContent=m.toFixed(4)+' months';
+  $('dc-wn').textContent=w.toFixed(4)+' weeks';
+  $('dc-dn').textContent=d.toFixed(2)+' days';
+  const wy=Math.floor(y), rm=(y-wy)*12, wm=Math.floor(rm), wd=Math.round((rm-wm)*30.4375);
+  const parts=[];
+  if(wy) parts.push(wy+' year'+(wy!==1?'s':''));
+  if(wm) parts.push(wm+' month'+(wm!==1?'s':''));
+  if(wd) parts.push(wd+' day'+(wd!==1?'s':''));
+  $('dc-ph').textContent=parts.length?parts.join(', '):'0 days';
+  $('dc-sum').style.display='block';
+}
+
+function dcLoad(y){ $('dc-y').value=y; dcCalc('years',y); }
+
+function dcClear(){
+  ['dc-y','dc-m','dc-w','dc-d'].forEach(id=>$(id).value='');
+  ['dc-yn','dc-mn','dc-wn','dc-dn'].forEach(id=>$(id).textContent='—');
+  $('dc-sum').style.display='none'; dcYrs=null;
+}
+
+function dcSend(targetId, panelId){
+  if(dcYrs==null) return;
+  const v=Number(dcYrs).toFixed(4);
+  $(targetId).value=v;
+  go(panelId);
+  if(panelId==='kth') doKth();
+  else if(panelId==='next') doNext();
+  else if(panelId==='single') doSI();
+  else if(panelId==='infl') doInfl();
+}
+</script>
+</body>
+</html>
